@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 PBF_URL="https://download.geofabrik.de/asia/india-latest.osm.pbf"
 PBF_FILE="/data/india-latest.osm.pbf"
