@@ -10,4 +10,5 @@ RUN cd apps/client && bun run build
 
 FROM nginx:alpine
 COPY --from=build /app/apps/client/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
