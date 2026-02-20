@@ -48,21 +48,22 @@ bun run dev
 
 ## 🐳 Docker (Production)
 
-The production Docker Compose setup pulls pre-built images from GitHub Container Registry:
+The production setup is fully self-bootstrapping — just run `docker compose up`:
 
 ```bash
-# Start the full stack
 docker compose up -d
-
-# Or use the startup script which also handles DB migration
-bash scripts/startup.sh
 ```
 
-Services exposed:
-- **Client:** `http://localhost:80`
-- **API Server:** `http://localhost:3001`
+On first run, two init containers automatically:
+- **init-osrm**: Downloads the India PBF (~200MB) from Geofabrik and builds the OSRM routing graph
+- **init-db**: Downloads HOT OSM railway data from HDX, imports GeoJSON into PostGIS, seeds 35,000+ stations, and runs fuzzy matching
 
-> **Note:** OSRM data files (`.osrm.*`) must be pre-built in the project root before starting. Run `bun run init` on a dev machine first to generate them.
+The first run takes **30-60+ minutes** depending on your internet speed and CPU (OSRM graph build is the bottleneck). Subsequent runs start in seconds — init containers detect existing data and skip.
+
+Services exposed:
+- **Client:** `http://localhost:80` (nginx reverse-proxies `/api` to the server)
+
+> **Note:** No host tools required — all data processing happens inside Docker containers.
 
 ## 🛠️ Scripts
 
@@ -72,7 +73,7 @@ Services exposed:
 | `bun run dev` | Start dev servers (Turbo monorepo) |
 | `bun run build` | Build both apps for production |
 | `bun run seed` | Seed station data into PostgreSQL |
-| `scripts/startup.sh` | Production startup (DB migration + app launch) |
+| `docker compose up` | Production startup (auto-bootstraps everything) |
 
 ## 📁 Project Structure
 

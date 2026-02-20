@@ -15,7 +15,15 @@ jobs:
       packages: write
     strategy:
       matrix:
-        app: [client, server]
+        include:
+          - app: client
+            dockerfile: apps/client/Dockerfile
+          - app: server
+            dockerfile: apps/server/Dockerfile
+          - app: init-osrm
+            dockerfile: docker/init-osrm/Dockerfile
+          - app: init-db
+            dockerfile: docker/init-db/Dockerfile
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +48,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/${{ matrix.app }}/Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
