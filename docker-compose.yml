@@ -14,23 +14,56 @@ services:
       timeout: 5s
       retries: 5
 
+  init-osrm:
+    build:
+      context: .
+      dockerfile: docker/init-osrm/Dockerfile
+    volumes:
+      - osrm-data:/data
+    restart: "no"
+
+  init-db:
+    build:
+      context: .
+      dockerfile: docker/init-db/Dockerfile
+    environment:
+      DB_HOST: postgis
+      DB_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-railway_map}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgis:
+        condition: service_healthy
+    restart: "no"
+
   osrm:
     image: ghcr.io/project-osrm/osrm-backend
     restart: unless-stopped
-    command: osrm-routed --algorithm ch /data/india-260219.osrm
+    command: osrm-routed --algorithm ch /data/india-latest.osrm
     volumes:
-      - ./:/data
+      - osrm-data:/data:ro
+    depends_on:
+      init-osrm:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/nearest/v1/train/77.2,28.6"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   server:
     image: ghcr.io/bravo68web/railway-map-server:latest
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgis:5432/${POSTGRES_DB:-railway_map}
       OSRM_URL: http://osrm:5000
     depends_on:
       postgis:
+        condition: service_healthy
+      init-db:
+        condition: service_completed_successfully
+      osrm:
         condition: service_healthy
 
   client:
@@ -43,3 +76,4 @@ services:
 
 volumes:
   pgdata:
+  osrm-data:
