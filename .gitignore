@@ -1,0 +1,26 @@
+# Data files
+*.osm.pbf
+*.osm
+*.zip
+data/
+*.osrm
+*.osrm.*
+
+# Node
+node_modules/
+dist/
+package-lock.json
+
+# Turbo
+.turbo/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+pgdata/
