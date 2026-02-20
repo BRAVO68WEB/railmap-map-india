@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY package.json bun.lockb ./
 COPY apps/server/package.json apps/server/
-RUN cd apps/server && bun install --frozen-lockfile
+RUN cd apps/server && bun install
 
 COPY apps/server apps/server
 COPY station.json .
