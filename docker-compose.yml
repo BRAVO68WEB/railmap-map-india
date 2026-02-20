@@ -1,0 +1,45 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-railway_map}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend
+    restart: unless-stopped
+    command: osrm-routed --algorithm ch /data/india-260219.osrm
+    volumes:
+      - ./:/data
+
+  server:
+    image: ghcr.io/bravo68web/railway-map-server:latest
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgis:5432/${POSTGRES_DB:-railway_map}
+      OSRM_URL: http://osrm:5000
+    depends_on:
+      postgis:
+        condition: service_healthy
+
+  client:
+    image: ghcr.io/bravo68web/railway-map-client:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
