@@ -1,7 +1,7 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
-COPY package.json bun.lockb ./
+COPY package.json ./
 COPY apps/client/package.json apps/client/
 RUN cd apps/client && bun install
 
