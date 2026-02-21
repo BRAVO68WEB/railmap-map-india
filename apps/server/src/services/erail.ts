@@ -64,7 +64,7 @@ export async function fetchTrainsErail(
   }
 }
 
-function parseBitmask(bitmask: string): string[] {
+export function parseBitmask(bitmask: string): string[] {
   if (bitmask.length !== 7) return [];
   return DAY_NAMES.filter((_, i) => bitmask[i] === "1");
 }

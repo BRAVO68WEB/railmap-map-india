@@ -1,5 +1,5 @@
 import pool from "../db";
-import { getStationByCode, type Station } from "./stations";
+import { getStationByCode, getStationsByCodes, type Station } from "./stations";
 import { getRoute as getOsrmRoute } from "./osrm";
 import { getRbsRoute, type RbsRoute } from "./rbs";
 
@@ -38,8 +38,32 @@ export async function findRoute(
   const rbsRoute =
     rbsResult.status === "fulfilled" ? rbsResult.value : null;
 
+  if (osrmRoute && rbsRoute && rbsRoute.stations.length >= 2) {
+    // Path 1: OSRM + RBS both succeeded (best case)
+    // Use OSRM geometry for the map line, RBS station list as authoritative intermediates
+    const rbsIntermediates = rbsRoute.stations.slice(1, -1);
+    const codes = rbsIntermediates.map((s) => s.code);
+    const dbStations = await getStationsByCodes(codes);
+
+    const intermediateStations: Station[] = rbsIntermediates.map((s) => {
+      const dbStation = dbStations.get(s.code.toUpperCase());
+      return dbStation ?? { code: s.code, name: s.name, lat: s.lat, lon: s.lon };
+    });
+
+    return {
+      geometry: osrmRoute.geometry,
+      distance_km: Math.round((osrmRoute.distance / 1000) * 10) / 10,
+      duration_hours: Math.round((osrmRoute.duration / 3600) * 10) / 10,
+      from,
+      to,
+      intermediate_stations: intermediateStations,
+      rbs_route: rbsRoute,
+      route_source: "osrm",
+    };
+  }
+
   if (osrmRoute) {
-    // OSRM succeeded: use OSRM geometry + PostGIS corridor stations
+    // Path 2: OSRM only, RBS failed — use tighter PostGIS corridor (500m)
     const intermediateResult = await pool.query(
       `SELECT code, name, ST_Y(geom) as lat, ST_X(geom) as lon
        FROM stations
@@ -48,7 +72,7 @@ export async function findRoute(
          AND ST_DWithin(
            geom::geography,
            ST_GeomFromGeoJSON($3)::geography,
-           2000
+           500
          )
        ORDER BY ST_LineLocatePoint(ST_GeomFromGeoJSON($3), geom)`,
       [
@@ -71,7 +95,7 @@ export async function findRoute(
   }
 
   if (rbsRoute && rbsRoute.stations.length >= 2) {
-    // OSRM failed, RBS fallback: build geometry from RBS station coordinates
+    // Path 3: RBS only, OSRM failed — build geometry from RBS coordinates
     const coordinates = rbsRoute.stations.map((s) => [s.lon, s.lat]);
     const intermediateStations = rbsRoute.stations
       .slice(1, -1)

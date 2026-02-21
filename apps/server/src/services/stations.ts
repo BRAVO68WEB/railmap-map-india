@@ -34,3 +34,22 @@ export async function getStationByCode(
   );
   return result.rows[0] || null;
 }
+
+export async function getStationsByCodes(
+  codes: string[]
+): Promise<Map<string, Station>> {
+  if (codes.length === 0) return new Map();
+
+  const result = await pool.query(
+    `SELECT code, name, ST_Y(geom) as lat, ST_X(geom) as lon
+     FROM stations
+     WHERE code = ANY($1) AND geom IS NOT NULL`,
+    [codes.map((c) => c.toUpperCase())]
+  );
+
+  const map = new Map<string, Station>();
+  for (const row of result.rows) {
+    map.set(row.code, row);
+  }
+  return map;
+}

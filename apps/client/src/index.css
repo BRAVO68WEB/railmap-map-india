@@ -7,3 +7,23 @@ body,
   margin: 0;
   padding: 0;
 }
+
+@keyframes blink-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0.4;
+  }
+}
+
+.blink-marker {
+  animation: blink-pulse 1.2s ease-in-out infinite;
+}
+
+.blink-marker-ring {
+  animation: blink-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.3s;
+}

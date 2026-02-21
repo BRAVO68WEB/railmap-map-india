@@ -8,6 +8,7 @@ import StationMarker from "./StationMarker";
 interface Props {
   route: RouteResult | null;
   focusStation: Station | null;
+  blinkStation?: Station | null;
 }
 
 function FocusHandler({ station }: { station: Station | null }) {
@@ -27,7 +28,17 @@ const rbsIcon = L.divIcon({
   iconAnchor: [4, 4],
 });
 
-export default function RailwayMap({ route, focusStation }: Props) {
+const blinkIcon = L.divIcon({
+  className: "",
+  html: `<div style="position:relative;width:20px;height:20px;">
+    <div class="blink-marker-ring" style="position:absolute;top:0;left:0;width:20px;height:20px;background:rgba(59,130,246,0.25);border-radius:50%;"></div>
+    <div class="blink-marker" style="position:absolute;top:5px;left:5px;width:10px;height:10px;background:#3b82f6;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(59,130,246,0.6);"></div>
+  </div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
+export default function RailwayMap({ route, focusStation, blinkStation }: Props) {
   return (
     <MapContainer
       center={[22.5, 82.0]}
@@ -91,6 +102,21 @@ export default function RailwayMap({ route, focusStation }: Props) {
               </Marker>
             ))}
         </>
+      )}
+      {blinkStation && blinkStation.lat !== 0 && blinkStation.lon !== 0 && (
+        <Marker
+          position={[blinkStation.lat, blinkStation.lon]}
+          icon={blinkIcon}
+          zIndexOffset={1000}
+        >
+          <Popup>
+            <strong>{blinkStation.code}</strong> - {blinkStation.name}
+            <br />
+            <span style={{ fontSize: "11px", color: "#3b82f6", fontWeight: 600 }}>
+              Next upcoming station
+            </span>
+          </Popup>
+        </Marker>
       )}
     </MapContainer>
   );

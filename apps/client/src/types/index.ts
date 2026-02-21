@@ -46,3 +46,59 @@ export interface Train {
   classes: string[];
   source: "railyatri" | "erail";
 }
+
+export interface TrainSuggestion {
+  number: string;
+  displayText: string;
+}
+
+export interface TrainRouteStop {
+  seq: number;
+  code: string;
+  name: string;
+  arrival: string;
+  departure: string;
+  halt_mins: string;
+  distance_km: number;
+  day: number;
+  platform: string;
+  zone: string;
+  division: string;
+  lat: number;
+  lon: number;
+}
+
+export interface TrainRouteResult {
+  train_number: string;
+  train_name: string;
+  source: { code: string; name: string };
+  destination: { code: string; name: string };
+  run_days: string[];
+  classes: string[];
+  stops: TrainRouteStop[];
+  geometry: { type: "LineString"; coordinates: number[][] };
+  total_distance_km: number;
+}
+
+export interface LiveStatusStop {
+  stationCode: string;
+  stationName: string;
+  arrivalTime: string;
+  departureTime: string;
+  haltMinutes: string;
+  distance: string;
+  day: number;
+  arrivalDelay: string | null;
+  departureDelay: string | null;
+  lat: number;
+  lon: number;
+}
+
+export interface LiveStatusResult {
+  trainNo: string;
+  trainName: string;
+  stops: LiveStatusStop[];
+  hasLiveData: boolean;
+  nextStationIndex: number | null;
+  geometry: { type: "LineString"; coordinates: number[][] };
+}
